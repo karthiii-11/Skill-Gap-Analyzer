@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skill Gap Analyzer</title>
+
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #3730a3;
+            --text: #172033;
+            --muted: #64748b;
+            --border: #dbe3ef;
+            --background: #f6f8fc;
+            --success: #047857;
+            --success-bg: #ecfdf5;
+            --danger: #b42318;
+            --danger-bg: #fff1f2;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--background);
+            color: var(--text);
+        }
+
+        .container {
+            width: min(100% - 32px, 1050px);
+            margin: 45px auto;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .hero h1 {
+            margin: 0 0 10px;
+            font-size: 38px;
+            color: var(--primary);
+        }
+
+        .hero p {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.07);
+        }
+
+        .field-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        select {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+        }
+
+        h2 {
+            margin: 30px 0 15px;
+        }
+
+        .category {
+            margin-top: 24px;
+        }
+
+        .category-title {
+            margin: 0 0 10px;
+            color: var(--muted);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+            gap: 10px;
+        }
+
+        .skill-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .skill-item:hover {
+            border-color: var(--primary);
+            background: #f5f3ff;
+        }
+
+        .skill-item input {
+            width: 17px;
+            height: 17px;
+            accent-color: var(--primary);
+        }
+
+        button {
+            width: 100%;
+            margin-top: 30px;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: var(--primary-dark);
+        }
+
+        .result-section {
+            margin-top: 35px;
+            padding-top: 30px;
+            border-top: 1px solid var(--border);
+        }
+
+        .description {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .score-area {
+            text-align: center;
+            margin: 25px 0;
+        }
+
+        .score-circle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 130px;
+            height: 130px;
+            border: 9px solid var(--primary);
+            border-radius: 50%;
+            color: var(--primary);
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .score-area p {
+            color: var(--muted);
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+        }
+
+        .result-box {
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .matched-box {
+            background: var(--success-bg);
+        }
+
+        .missing-box {
+            background: var(--danger-bg);
+        }
+
+        .matched-box h3 {
+            margin-top: 0;
+            color: var(--success);
+        }
+
+        .missing-box h3 {
+            margin-top: 0;
+            color: var(--danger);
+        }
+
+        .result-box ul {
+            margin-bottom: 0;
+            padding-left: 20px;
+        }
+
+        .result-box li {
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                margin: 25px auto;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .hero h1 {
+                font-size: 30px;
+            }
+
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="container">
+        <div style="text-align: right; margin-bottom: 15px; color: #64748b;">
+            {{ user_name }} ({{ user_status }})
+        </div>
+        <section class="hero">
+            <h1>Skill Gap Analyzer</h1>
+            <p>
+                Choose your career goal and current skills
+                to discover what to learn next.
+            </p>
+        </section>
+
+        <section class="card">
+            <form method="POST">
+                {% csrf_token %}
+
+                <label class="field-label" for="career_track">
+                    Choose Your Target Career
+                </label>
+
+                <select name="career_track" id="career_track" required>
+                    <option value="">Select a career track</option>
+
+                    {% for track in career_tracks %}
+                        <option
+                            value="{{ track.id }}"
+                            {% if selected_role.id == track.id %}selected{% endif %}
+                        >
+                            {{ track.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <h2>Select Your Current Skills</h2>
+
+                {% for category in skill_categories %}
+                    <section class="category">
+                        <h3 class="category-title">{{ category.name }}</h3>
+
+                        <div class="skills-grid">
+                            {% for skill in category.skills %}
+                                <label class="skill-item">
+                                    <input
+                                        type="checkbox"
+                                        name="skills"
+                                        value="{{ skill.id }}"
+                                        {% if skill.id in selected_skill_ids %}checked{% endif %}
+                                    >
+                                    {{ skill.name }}
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </section>
+                {% endfor %}
+
+                <button type="submit">Analyze My Skills</button>
+            </form>
+
+            {% if selected_role %}
+                <section class="result-section">
+                    <h2>Analysis Result: {{ selected_role.name }}</h2>
+
+                    <p class="description">
+                        {{ selected_role.description }}
+                    </p>
+
+                    <div class="score-area">
+                        <div class="score-circle">{{ score }}%</div>
+
+                        <p>
+                            You match {{ matched_skills_count }}
+                            out of {{ total_required_skills }} required skills.
+                        </p>
+                    </div>
+
+                    <div class="result-box" style="background:#f1f5f9; margin-bottom: 18px;">
+                        <h3>Your Selected Skills</h3>
+                        <ul>
+                            {% for skill in selected_skills %}
+                                <li>{{ skill.name }}</li>
+                            {% empty %}
+                                <li>No skills selected.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="result-grid">
+                        <div class="result-box matched-box">
+                            <h3>Skills You Have</h3>
+
+                            <ul>
+                                {% for skill in matched_skills %}
+                                    <li>{{ skill.name }}</li>
+                                {% empty %}
+                                    <li>No required skills selected yet.</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <div class="result-box missing-box">
+                            <h3>Skills To Learn Next</h3>
+
+                            <ul>
+                                {% for skill in missing_skills %}
+                                    <li>{{ skill.name }}</li>
+                                {% empty %}
+                                    <li>
+                                        Great! You have all required skills
+                                        for this role.
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>
